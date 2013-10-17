@@ -10,3 +10,4 @@ pom.xml
 *.class
 /.lein-*
 /.env
+resources/properties.clj
