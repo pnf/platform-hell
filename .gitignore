@@ -1,0 +1,12 @@
+/target
+/lib
+/classes
+/checkouts
+pom.xml
+*~
+*.log
+.nrepl*
+*.jar
+*.class
+/.lein-*
+/.env
