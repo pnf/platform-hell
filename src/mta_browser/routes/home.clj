@@ -114,18 +114,19 @@ assumed to be in local zone."
                           (map :rate rates)
                           :series-label "Actual"))))
 
+(defn- chart->stream [chart]
+  (let [os (java.io.ByteArrayOutputStream.)]
+    (do (icore/save chart os)
+        (java.io.ByteArrayInputStream. (.toByteArray os)))))
+
 (defn show-graph [date service_code platform]
   (let [platform ((:code-> (get-platforms)) platform)]
     (if-not platform
       "Format graph?date=YYYY-MM-DD&platform=NNND:R"
       (let [graph     (make-graph date service_code
                                   (:stop_id platform)
-                                  (:route_id platform))
-            os        (java.io.ByteArrayOutputStream.)
-            is        (do (icore/save graph os)
-                          (java.io.ByteArrayInputStream. 
-                           (.toByteArray os)))]
-        (nr/content-type "image/png" is))
+                                  (:route_id platform))]
+        (nr/content-type "image/png" (chart->stream graph)))
       )))
 
 (defn home-page []
@@ -133,7 +134,7 @@ assumed to be in local zone."
    "home.html" {:platforms (:sorted (get-platforms))}))
 
 (defroutes home-routes
-  (GET "/" [] (home-page))
-  (GET "/graph"
+  (GET "/hell" [] (home-page))
+  (GET "/hell-graph"
        [date service_code platform]
        (show-graph date service_code platform)))
