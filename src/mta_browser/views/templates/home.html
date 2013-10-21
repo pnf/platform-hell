@@ -1,14 +1,27 @@
 {% extends "mta_browser/views/templates/base.html" %}
 {% block content %}
  <div class="jumbotron">
-    <h1>Welcome to mta-browser</h1>
-    <p>Time to start building your site!</p>
-    <p><a class="btn btn-primary btn-large" href="http://luminusweb.net">Learn more &raquo;</a></p>
+    <h1>Platform Hell Estimator</h1>
  </div>
 
+<form action="/graph" id="plat">
+  <input type="submit" value="Graph it!">
+ </form>
+
+<select name="platform" form="plat">
+{% for platform in platforms %}       
+  <option value={{platform.code}}>{{platform.title}}</option>
+{% endfor %}
+</select>
+
+
+<!--
  <div class="row-fluid">
     <div class="span8">
     {{content|safe}}
     </div>
  </div>
+-->
+
+
 {% endblock %}
