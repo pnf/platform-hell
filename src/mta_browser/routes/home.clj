@@ -134,7 +134,7 @@ assumed to be in local zone."
    "home.html" {:platforms (:sorted (get-platforms))}))
 
 (defroutes home-routes
-  (GET "/" [] (home-page))
-  (GET "/graph"
+  (GET "/hell" [] (home-page))
+  (GET "/hell-graph"
        [date service_code platform]
        (show-graph date service_code platform)))
