@@ -135,6 +135,6 @@ assumed to be in local zone."
 
 (defroutes home-routes
   (GET "/hell" [] (home-page))
-  (GET "/hell-graph"
+  (GET "/hell/images/graph"
        [date service_code platform]
        (show-graph date service_code platform)))
