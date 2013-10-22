@@ -1,13 +1,12 @@
 (ns mta-browser.handler  
   (:require [compojure.core :refer [defroutes]]            
             [mta-browser.routes.home :refer [home-routes]]
+            [mta-browser.hell-grapher :as hg]
             [noir.util.middleware :as middleware]
             [compojure.route :as route]
             [taoensso.timbre :as timbre]
             [com.postspectacular.rotor :as rotor]
-            [monger.core :as mg]
-            [clojure.java.io :as io]
-))
+            [clojure.java.io :as io]))
 
 (defroutes app-routes
   (route/resources "/")
@@ -35,9 +34,7 @@
     [:shared-appender-config :rotor]
     {:path "mta_browser.log" :max-size (* 512 1024) :backlog 10})
 
-  (timbre/info "Connecting to mongo on port" (:mongo-port properties))
-  (mg/connect! {:port (:mongo-port properties)})
-  (mg/set-db! (mg/get-db "mta"))
+  (hg/init properties)
 
   (timbre/info "mta-browser started successfully")
 
@@ -47,7 +44,9 @@
   "destroy will be called when your application
    shuts down, put any clean up code here"
   []
-  (timbre/info "mta-browser is shutting down..."))
+  (timbre/info "mta-browser is shutting down...")
+  (hg/shutdown)
+)
 
 (def app (middleware/app-handler
            ;; add your application routes here
