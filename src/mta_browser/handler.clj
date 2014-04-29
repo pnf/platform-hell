@@ -60,4 +60,5 @@
            ;; :json :json-kw :yaml :yaml-kw :edn :yaml-in-html
            :formats [:json-kw :edn]))
 
-(def war-handler (middleware/war-handler app))
+;(def war-handler (middleware/war-handler app))
+
