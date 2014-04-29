@@ -1,13 +1,14 @@
 (ns mta-browser.hell-grapher
   (:use compojure.core monger.operators )
-  (:require             [taoensso.timbre :as timbre]
-                        [monger.core :as mg]
+  (:require  [taoensso.timbre :as timbre]
+             [monger.core :as mg]
              [monger.collection :as mc]
              [monger.operators :as mo]
-            [incanter.core :as icore]
-            [incanter.charts :as icharts]
-            [clj-time.core :as dt]
-            [clj-time.format :as df]))
+             [monger.query :as mq]
+             [incanter.core :as icore]
+             [incanter.charts :as icharts]
+             [clj-time.core :as dt]
+             [clj-time.format :as df]))
 
 
 (defn init [properties]
@@ -93,9 +94,44 @@ assumed to be in local zone."
         sorted-platforms (sort platform-compare (vals code->platform))]
     {:code-> code->platform :sorted sorted-platforms}))
 
+;; nb. using sched table would include routes for which we don't actually have data
+#_(defn- fetch-platforms
+  "Returns list of maps like
+ {:station_name \"33 St\", :route_id \"5\", :dir \"N\", :stop \"632\", :stop_id \"632N\"}"
+  []
+  (let [query           [{$project {:platform {"$concat" ["$stop_id" ":" "$route_id"]}}}
+                         {$group {:_id "na" :platforms {$addToSet "$platform"}}}]
+        code->platform  (->> (mc/aggregate "sched" query) first :platforms
+                      ; ==> "132S:2", "632N:5", etc.
+                             (map (partial re-find #"((\S+)([NS])):(\S+)"))
+                             (map #(zipmap [:code :stop_id :station :dir :route_id] %))
+                             (map #(assoc %
+                                     :title (nice-title (:stop_id %) (:route_id %))
+                                     :station_name ((get-stop-names) (:stop_id %))))
+                             (reduce #(assoc %1 (:code %2) %2) {}))
+        sorted-platforms (sort platform-compare (vals code->platform))]
+    {:code-> code->platform :sorted sorted-platforms}))
+
 (def platform-cache (atom {:time 0}))
 (defn get-platforms []
   (throttled-fetch platform-cache (* 7 24 3600 1000) fetch-platforms ))
+
+; Want latest "now" for vehicle trip at station
+(defn- get-etas-at-station [stop_id]
+  (let [now     (:now (first  (mq/with-collection "etas"
+                                (mq/find {:stop_id stop_id})
+                                (mq/sort {:now -1})
+                                (mq/limit 1))))
+        trips    (set (map :trip_id  (mc/find-maps "etas" {:now {mo/$gte now}
+                                                        :stop_id stop_id})))
+        etas     (mq/with-collection "etas"
+                   (mq/find {:now {mo/$gte now mo/$lte (+ now 900)}
+                             :trip_id {mo/$in trips}})
+                   (mq/limit 500)
+                   (mq/fields [:trip_id :route_id :stop_id]))
+        ]
+    [trips etas]
+    ))
 
 (defn make-graph [date service_code stop_id route_id]
   (let [tz            (dt/default-time-zone)
